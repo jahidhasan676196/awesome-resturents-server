@@ -95,6 +95,18 @@ async function run() {
       const result = await userCollection.findOne(filter)
       res.send(result)
     })
+     // get all review
+     app.get('/review', async (req, res) => {
+      const result = await reviewCollection.find().toArray()
+      res.send(result)
+    })
+    // get a menu data
+    app.get('/menu/:id',async(req,res)=>{
+      const id=req.params.id
+      const query={_id: new ObjectId(id)}
+      const result=await menuCollection.findOne(query)
+      res.send(result)
+    })
 
     // post users data
     app.post('/users', async (req, res) => {
@@ -105,6 +117,12 @@ async function run() {
         return res.send({ status: 'user is alerady save' })
       }
       const result = await userCollection.insertOne(info)
+      res.send(result)
+    })
+    // post a item
+    app.post('/menu',async(req,res)=>{
+      const info=req.body
+      const result =await menuCollection.insertOne(info)
       res.send(result)
     })
     // upadate a admin role
@@ -120,11 +138,32 @@ async function run() {
       const result = await userCollection.updateOne(filter, updateDoc, options)
       res.send(result)
     })
+    // update menu itmem
+    app.put('/menu/:id',async(req,res)=>{
+      const id=req.params.id
+      const filter={_id: new ObjectId(id)}
+      const options = { upsert: true };
+      const updateData=req.body
+      const updateDoc={
+        $set:{
+          ...updateData
+        }
+      }
+      const result=await menuCollection.updateOne(filter,updateDoc,options)
+      res.send(result)
+    })
     // delete a user
     app.delete('/users/:id', async (req, res) => {
       const id = req.params.id
       const filter = { _id: new ObjectId(id) }
       const result = await userCollection.deleteOne(filter)
+      res.send(result)
+    })
+    // delete a menu
+    app.delete('/menu/:id',async(req,res)=>{
+      const id =req.params.id
+      const query={_id: new ObjectId(id)}
+      const result=await menuCollection.deleteOne(query)
       res.send(result)
     })
     // post card data
@@ -133,11 +172,7 @@ async function run() {
       const result = await cardsCollection.insertOne(info)
       res.send(result)
     })
-    // get all review
-    app.get('/review', async (req, res) => {
-      const result = await reviewCollection.find().toArray()
-      res.send(result)
-    })
+   
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");

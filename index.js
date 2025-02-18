@@ -33,6 +33,7 @@ async function run() {
     const reviewCollection = client.db('bistro_DB').collection('review')
     const cardsCollection = client.db('bistro_DB').collection('cards')
     const userCollection = client.db('bistro_DB').collection('users')
+    const prementCollection = client.db('bistro_DB').collection('prements')
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
     // varify token
@@ -42,7 +43,7 @@ async function run() {
         return res.status(401).send({ message: 'unauthorized access' });
       }
       const token=req.headers.authorization.split(' ')[1]
-      console.log(token);
+      // console.log(token);
       jwt.verify(token,process.env.USER_TOKEN,(err,decoded)=>{
         if(err){
           return res.status(401).send({massage:'unauthorized person'})
@@ -108,6 +109,12 @@ async function run() {
       const result=await menuCollection.findOne(query)
       res.send(result)
     })
+    app.get('/payment/:email',async(req,res)=>{
+      const email=req.params.email
+      const query={email: email}
+      const result=await prementCollection.find(query).toArray()
+      res.send(result)
+    })
 
     // post users data
     app.post('/users', async (req, res) => {
@@ -160,6 +167,13 @@ async function run() {
       const result = await userCollection.deleteOne(filter)
       res.send(result)
     })
+    // delete payments history
+    app.delete('/payments/:id',async(req,res)=>{
+      const id=req.params.id
+      const query={_id: new ObjectId(id)}
+      const result=await prementCollection.deleteOne(query)
+      res.send(result)
+    })
     // delete a menu
     app.delete('/menu/:id',async(req,res)=>{
       const id =req.params.id
@@ -172,6 +186,18 @@ async function run() {
       const query={_id: new ObjectId(id)}
       const result=await cardsCollection.deleteOne(query)
       res.send(result)
+    })
+    // delete cards menu
+    app.post('/prements',async(req,res)=>{
+      const ids=req.body.ids
+      const info=req.body
+      // console.log(req.body);
+      const query={_id:  {
+        $in:ids.map(id=> new ObjectId(id))
+      }}
+      const deleteItem=await cardsCollection.deleteMany(query)
+      const prementItem=await prementCollection.insertOne(info)
+      res.send({deleteItem,prementItem})
     })
     // post card data
     app.post('/cards', async (req, res) => {

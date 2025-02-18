@@ -2,6 +2,7 @@ const express = require('express')
 const app = express()
 const cors = require('cors')
 require('dotenv').config()
+const stripe = require("stripe")(process.env.STIPE_TOKEN)
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000
@@ -166,12 +167,31 @@ async function run() {
       const result=await menuCollection.deleteOne(query)
       res.send(result)
     })
+    app.delete('/cards/:id',async(req,res)=>{
+      const id=req.params.id
+      const query={_id: new ObjectId(id)}
+      const result=await cardsCollection.deleteOne(query)
+      res.send(result)
+    })
     // post card data
     app.post('/cards', async (req, res) => {
       const info = req.body
       const result = await cardsCollection.insertOne(info)
       res.send(result)
     })
+    // payments methods
+    app.post("/create-payment-intent", async (req, res)=>{
+      const {totalAmount}=req.body
+      const amount=parseInt(totalAmount *100)
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    } )
    
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
